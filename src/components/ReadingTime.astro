@@ -1,0 +1,47 @@
+---
+import type { MarkdownHeading } from "astro";
+
+export interface Props {
+  content: string;
+  class?: string;
+}
+
+const { content, class: className } = Astro.props;
+
+// 计算阅读时间的函数
+function calculateReadingTime(text: string): number {
+  // 中文字符数（包括中文标点）
+  const chineseChars = (text.match(/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/g) || []).length;
+  
+  // 英文单词数
+  const englishWords = text
+    .replace(/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/g, '') // 移除中文字符
+    .split(/\s+/)
+    .filter(word => word.length > 0).length;
+  
+  // 中文阅读速度：约300字/分钟
+  // 英文阅读速度：约200词/分钟
+  const chineseReadingTime = chineseChars / 300;
+  const englishReadingTime = englishWords / 200;
+  
+  const totalMinutes = chineseReadingTime + englishReadingTime;
+  
+  // 至少1分钟
+  return Math.max(1, Math.round(totalMinutes));
+}
+
+const readingTime = calculateReadingTime(content);
+---
+
+<div class:list={["reading-time flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400", className]}>
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+  </svg>
+  <span>{readingTime} min read</span>
+</div>
+
+<style>
+  .reading-time {
+    font-variant-numeric: tabular-nums;
+  }
+</style>

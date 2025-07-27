@@ -2,16 +2,18 @@ import type { Props } from "astro";
 import IconMail from "@/assets/icons/IconMail.svg";
 import IconGitHub from "@/assets/icons/IconGitHub.svg";
 import IconBrandX from "@/assets/icons/IconBrandX.svg";
-import IconLinkedin from "@/assets/icons/IconLinkedin.svg";
+import IconWechat from "@/assets/icons/IconWechat.svg";
+import IconXiaohongshu from "@/assets/icons/IconXiaohongshu.svg";
 import IconWhatsapp from "@/assets/icons/IconWhatsapp.svg";
 import IconFacebook from "@/assets/icons/IconFacebook.svg";
 import IconTelegram from "@/assets/icons/IconTelegram.svg";
 import IconPinterest from "@/assets/icons/IconPinterest.svg";
+import IconZhihu from "@/assets/icons/IconZhihu.svg";
 import { SITE } from "@/config";
 
 interface Social {
   name: string;
-  href: string;
+  href: string
   linkTitle: string;
   icon: (_props: Props) => Element;
 }
@@ -19,27 +21,39 @@ interface Social {
 export const SOCIALS: Social[] = [
   {
     name: "GitHub",
-    href: "https://github.com/satnaing/astro-paper",
+    href: "https://github.com/deepforthink",
     linkTitle: `${SITE.title} on GitHub`,
     icon: IconGitHub,
   },
   {
     name: "X",
-    href: "https://x.com/username",
+    href: "https://x.com/@PiersonD015",
     linkTitle: `${SITE.title} on X`,
     icon: IconBrandX,
   },
   {
-    name: "LinkedIn",
-    href: "https://www.linkedin.com/in/username/",
-    linkTitle: `${SITE.title} on LinkedIn`,
-    icon: IconLinkedin,
+    name: "Xiaohongshu",
+    href: "https://www.xiaohongshu.com/user/profile/64903e05000000000f00708b",
+    linkTitle: `${SITE.title} on Xiaohongshu`,
+    icon: IconXiaohongshu,
   },
   {
     name: "Mail",
-    href: "mailto:yourmail@gmail.com",
+    href: "mailto:yf_dong@mail.nankai.edu.cn",
     linkTitle: `Send an email to ${SITE.title}`,
     icon: IconMail,
+  },
+  {
+    name: "Zhihu",
+    href: "https://www.zhihu.com/people/liu-lang-de-si-xiang",
+    linkTitle: `${SITE.title} on Zhihu`,
+    icon: IconZhihu,
+  },
+  {
+    name: "Wechat",
+    href: "https://github.com/deepforthink/yufudong/src/assets/images/Wechatscan.jpg",
+    linkTitle: `${SITE.title} on Wechat`,
+    icon: IconWechat,
   },
 ] as const;
 

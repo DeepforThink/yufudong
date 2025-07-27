@@ -1,0 +1,440 @@
+---
+export interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<!-- 桌面端目录切换图标 - 贴图风格 -->
+<div
+  id="desktop-toc-toggle"
+  class="hidden xl:block fixed left-8 top-32 z-40 w-6 h-6 cursor-pointer transition-all duration-200 hover:scale-110"
+  aria-label="切换目录显示"
+  style="display: none;"
+>
+  <svg class="w-full h-full text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+  </svg>
+</div>
+
+<!-- 桌面端目录 - 左侧简洁版本 -->
+<div 
+  id="toc-container" 
+  class:list={[
+    "hidden xl:block fixed left-8 top-40 w-48 z-30",
+    "text-sm opacity-0 transition-opacity duration-300",
+    className
+  ]}
+  style="display: none;"
+>
+  <!-- 进度条 -->
+  <div class="mb-4">
+    <div class="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div 
+        id="reading-progress"
+        class="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300 ease-out"
+        style="width: 0%"
+      ></div>
+    </div>
+    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+      阅读进度: <span id="progress-text">0%</span>
+    </div>
+  </div>
+  
+  <nav id="toc-nav" class="space-y-1">
+    <!-- TOC will be populated by JavaScript -->
+  </nav>
+</div>
+
+<!-- 移动端目录按钮 -->
+<button
+  id="mobile-toc-btn"
+  class="xl:hidden fixed bottom-6 right-6 z-50 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200"
+  aria-label="显示目录"
+  style="display: none;"
+>
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+  </svg>
+</button>
+
+<!-- 移动端目录弹窗 -->
+<div
+  id="mobile-toc-overlay"
+  class="xl:hidden fixed inset-0 z-40 bg-black/50 hidden"
+>
+  <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-t-xl p-6 max-h-[80vh] overflow-y-auto shadow-2xl">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">目录</h3>
+      <button id="close-mobile-toc" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <nav id="mobile-toc-nav" class="space-y-1">
+      <!-- Mobile TOC will be populated by JavaScript -->
+    </nav>
+  </div>
+</div>
+
+<script>
+  function createTableOfContents() {
+    const tocNav = document.getElementById('toc-nav');
+    const mobileTocNav = document.getElementById('mobile-toc-nav');
+    const tocContainer = document.getElementById('toc-container');
+    const mobileTocBtn = document.getElementById('mobile-toc-btn');
+    const desktopTocToggle = document.getElementById('desktop-toc-toggle');
+    
+    if (!tocNav || !mobileTocNav || !tocContainer || !mobileTocBtn || !desktopTocToggle) return;
+    
+    // Find all headings in the article
+    const headings = document.querySelectorAll('article h2, article h3, article h4, article h5, article h6');
+    
+    if (headings.length === 0) {
+      tocContainer.style.display = 'none';
+      mobileTocBtn.style.display = 'none';
+      desktopTocToggle.style.display = 'none';
+      return;
+    }
+    
+    // Clear existing content
+    tocNav.innerHTML = '';
+    mobileTocNav.innerHTML = '';
+    
+    // Create TOC links - 完全模仿参考网站样式
+    headings.forEach((heading, index) => {
+      // Ensure heading has an ID
+      if (!heading.id) {
+        heading.id = `heading-${index}`;
+      }
+      
+      const level = parseInt(heading.tagName[1]) - 2; // h2=0, h3=1, h4=2, etc.
+      const text = heading.textContent?.replace('#', '').trim() || '';
+      
+      // 创建桌面端链接 - 简洁风格，只调整字体颜色深浅
+      const link = document.createElement('a');
+      link.href = `#${heading.id}`;
+      link.textContent = text;
+      link.className = `
+        block py-1 text-sm transition-colors duration-200
+        text-gray-400 dark:text-gray-500
+        hover:text-gray-700 dark:hover:text-gray-300
+      `.replace(/\s+/g, ' ').trim();
+      
+      // 根据标题级别设置样式
+      if (level === 0) {
+        link.className += ' font-medium';
+      } else {
+        (link as HTMLElement).style.paddingLeft = `${level * 12}px`;
+        link.className += ' text-xs';
+      }
+      
+      // 创建移动端链接
+      const mobileLink = document.createElement('a');
+      mobileLink.href = `#${heading.id}`;
+      mobileLink.textContent = text;
+      mobileLink.className = `
+        block py-2.5 px-3 text-base transition-colors duration-200 rounded
+        text-gray-700 dark:text-gray-300
+        hover:text-blue-600 dark:hover:text-blue-400
+        hover:bg-gray-50 dark:hover:bg-gray-800/50
+      `.replace(/\s+/g, ' ').trim();
+      
+      if (level === 0) {
+        mobileLink.className += ' font-medium';
+      } else {
+        (mobileLink as HTMLElement).style.paddingLeft = `${12 + level * 20}px`;
+        mobileLink.className += ' text-sm';
+      }
+      
+      // 添加点击事件处理器
+      const addClickHandler = (linkElement: HTMLAnchorElement) => {
+        linkElement.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = document.getElementById(heading.id);
+          if (target) {
+            const headerOffset = 80;
+            const elementPosition = target.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+            
+            // 更新活跃状态
+            updateActiveHeading(heading.id);
+            
+            // 关闭移动端目录
+            const mobileOverlay = document.getElementById('mobile-toc-overlay');
+            if (mobileOverlay && !mobileOverlay.classList.contains('hidden')) {
+              mobileOverlay.classList.add('hidden');
+              document.body.style.overflow = '';
+            }
+          }
+        });
+      };
+      
+      addClickHandler(link as HTMLAnchorElement);
+      addClickHandler(mobileLink as HTMLAnchorElement);
+      
+      tocNav.appendChild(link);
+      mobileTocNav.appendChild(mobileLink);
+    });
+    
+    // 显示目录容器和移动端按钮
+    tocContainer.style.display = 'block';
+    mobileTocBtn.style.display = 'flex';
+    desktopTocToggle.style.display = 'flex';
+    
+    // 设置桌面端目录切换功能
+    setupDesktopTOCToggle();
+    
+    // 设置移动端目录控制
+    setupMobileTOC();
+    
+    // 设置滚动监听和进度跟踪
+    setupScrollSpy();
+    setupProgressTracking();
+  }
+  
+  function setupDesktopTOCToggle() {
+    const tocContainer = document.getElementById('toc-container');
+    const desktopTocToggle = document.getElementById('desktop-toc-toggle');
+    
+    if (!tocContainer || !desktopTocToggle) return;
+    
+    let isVisible = true; // 默认展开
+    
+    desktopTocToggle.addEventListener('click', () => {
+      if (isVisible) {
+        // 隐藏目录 - 透明度动画
+        tocContainer.style.opacity = '0';
+        tocContainer.style.pointerEvents = 'none';
+        isVisible = false;
+      } else {
+        // 显示目录 - 透明度动画
+        tocContainer.style.opacity = '1';
+        tocContainer.style.pointerEvents = 'auto';
+        isVisible = true;
+      }
+    });
+    
+    // 初始状态显示（默认展开）
+    tocContainer.style.opacity = '1';
+    tocContainer.style.pointerEvents = 'auto';
+  }
+  
+  function setupMobileTOC() {
+    const mobileTocBtn = document.getElementById('mobile-toc-btn');
+    const mobileOverlay = document.getElementById('mobile-toc-overlay');
+    const closeMobileToc = document.getElementById('close-mobile-toc');
+    
+    if (!mobileTocBtn || !mobileOverlay || !closeMobileToc) return;
+    
+    mobileTocBtn.addEventListener('click', () => {
+      mobileOverlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+    
+    const closeMobile = () => {
+      mobileOverlay.classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+    
+    closeMobileToc.addEventListener('click', closeMobile);
+    
+    // 点击遮罩层关闭
+    mobileOverlay.addEventListener('click', (e) => {
+      if (e.target === mobileOverlay) {
+        closeMobile();
+      }
+    });
+    
+    // ESC键关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !mobileOverlay.classList.contains('hidden')) {
+        closeMobile();
+      }
+    });
+  }
+  
+  function setupScrollSpy() {
+    const headings = document.querySelectorAll('article h2, article h3, article h4, article h5, article h6');
+    
+    if (headings.length === 0) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            updateActiveHeading(entry.target.id);
+          }
+        });
+      },
+      {
+        rootMargin: '-100px 0px -66% 0px',
+        threshold: 0.1
+      }
+    );
+    
+    headings.forEach((heading) => {
+      observer.observe(heading);
+    });
+  }
+  
+  function setupProgressTracking() {
+    const progressBar = document.getElementById('reading-progress');
+    const progressText = document.getElementById('progress-text');
+    
+    if (!progressBar || !progressText) return;
+    
+    const updateProgress = () => {
+      const article = document.querySelector('article');
+      if (!article) return;
+      
+      const articleTop = article.offsetTop;
+      const articleHeight = article.offsetHeight;
+      const windowHeight = window.innerHeight;
+      const scrollTop = window.pageYOffset;
+      
+      // 简化的阅读进度计算：
+      // 0% = 页面顶部，100% = 页面底部
+      const documentHeight = document.documentElement.scrollHeight;
+      const progress = Math.min(100, Math.max(0, (scrollTop / (documentHeight - windowHeight)) * 100));
+      
+      // 更新进度条和文本
+      progressBar.style.width = `${progress}%`;
+      progressText.textContent = `${Math.round(progress)}%`;
+    };
+    
+    // 监听滚动事件
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress, { passive: true });
+    
+    // 初始化进度
+    updateProgress();
+  }
+  
+  function updateActiveHeading(activeId: string) {
+    const tocLinks = document.querySelectorAll('#toc-nav a, #mobile-toc-nav a');
+    
+    tocLinks.forEach((link) => {
+      const linkElement = link as HTMLAnchorElement;
+      const isActive = linkElement.getAttribute('href') === `#${activeId}`;
+      
+      if (isActive) {
+        // 当前标题样式 - 深色字体
+        linkElement.classList.remove('text-gray-400', 'dark:text-gray-500', 'text-gray-700', 'dark:text-gray-300');
+        linkElement.classList.add('text-gray-900', 'dark:text-white');
+        
+        // 确保活跃项在视野内
+        linkElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        });
+      } else {
+        // 非当前标题样式 - 浅色字体
+        linkElement.classList.remove('text-gray-900', 'dark:text-white');
+        linkElement.classList.add('text-gray-400', 'dark:text-gray-500');
+      }
+    });
+  }
+  
+  // 初始化
+  document.addEventListener('DOMContentLoaded', createTableOfContents);
+  
+  // 页面过渡后重新初始化
+  document.addEventListener('astro:after-swap', () => {
+    setTimeout(createTableOfContents, 100);
+  });
+</script>
+
+<style>
+  /* 目录容器基础样式 - 带透明度过渡动画 */
+  #toc-container {
+    z-index: 30;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+  /* 桌面端切换图标样式 - 贴图风格 */
+  #desktop-toc-toggle {
+    transition: all 0.2s ease;
+  }
+  
+  #desktop-toc-toggle:hover {
+    transform: scale(1.1);
+  }
+  
+  /* 响应式调整 - 只在xl屏幕显示桌面版 */
+  @media (max-width: 1280px) {
+    #toc-container,
+    #desktop-toc-toggle {
+      display: none !important;
+    }
+  }
+  
+  /* 进度条容器样式 */
+  #reading-progress {
+    transition: width 0.3s ease-out;
+  }
+  
+  /* 简洁滚动条 */
+  #toc-container::-webkit-scrollbar {
+    width: 2px;
+  }
+  
+  #toc-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  #toc-container::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 1px;
+  }
+  
+  .dark #toc-container::-webkit-scrollbar-thumb {
+    background: #374151;
+  }
+  
+  /* 目录链接样式 - 极简 */
+  #toc-nav a {
+    text-decoration: none;
+    display: block;
+  }
+  
+  /* 移动端按钮样式 */
+  #mobile-toc-btn {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+  
+  #mobile-toc-btn:hover {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+  }
+  
+  /* 移动端弹窗样式 */
+  #mobile-toc-overlay {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  
+  /* 防止文本选择 */
+  #toc-container,
+  #mobile-toc-overlay {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  /* 平滑过渡动画 */
+  #toc-nav a,
+  #mobile-toc-nav a {
+    transition: color 0.15s ease;
+  }
+</style>

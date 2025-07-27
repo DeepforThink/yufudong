@@ -9,6 +9,8 @@ import EditPost from "@/components/EditPost.astro";
 import ShareLinks from "@/components/ShareLinks.astro";
 import BackButton from "@/components/BackButton.astro";
 import BackToTopButton from "@/components/BackToTopButton.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
+import ReadingTime from "@/components/ReadingTime.astro";
 import { getPath } from "@/utils/getPath";
 import { slugifyStr } from "@/utils/slugify";
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
@@ -85,6 +87,10 @@ const nextPost =
 <Layout {...layoutProps}>
   <Header />
   <BackButton />
+  
+  <!-- Table of Contents -->
+  <TableOfContents />
+  
   <main
     id="main-content"
     class:list={[
@@ -109,6 +115,11 @@ const nextPost =
         ]}>|</span
       >
       <EditPost {hideEditPost} {post} class="max-sm:hidden" />
+      <span
+        aria-hidden="true"
+        class="max-sm:hidden">|</span
+      >
+      <ReadingTime content={post.body || ""} />
     </div>
     <article
       id="article"
