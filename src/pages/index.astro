@@ -18,44 +18,14 @@ const posts = await getCollection("blog");
 const sortedPosts = getSortedPosts(posts);
 const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
 const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
-
-// 中文名言
-const chineseQuotes = [
-  "青春也不过只有这些日子",
-  "认识你自己",
-  "生活就像一盒巧克力，你永远不知道下一块是什么味道",
-  "知行合一",
-];
-
-// 英文名言
-const englishQuotes = [
-  "The shortest answer is doing",
-  "Stay hungry, stay foolish",
-  "Be yourself; everyone else is already taken.",
-  "Nothing will work unless you do.",
-  "Be curious, not judgmental.",
-  "Dreaming, after all, is a form of planning."
-];
-
-// 固定的简介
-const descriptions = {
-  zh: "不骛于虚声，不驰于空想，欢迎来到我的博客！",
-  en: "Be yourself, do rather than say. Welcome to my blog!"
-};
-
-// 随机选择语言
-const isChineseQuote = Math.random() > 0.5;
-const selectedQuotes = isChineseQuote ? chineseQuotes : englishQuotes;
-const randomQuote = selectedQuotes[Math.floor(Math.random() * selectedQuotes.length)];
-const currentLang = isChineseQuote ? "zh" : "en";
 ---
 
 <Layout>
   <Header />
   <main id="main-content" data-layout="index">
     <section id="hero" class="pt-8 pb-6">
-      <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl">
-        {randomQuote}
+      <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl" id="quote-display">
+        Loading...
       </h1>
       <a
         target="_blank"
@@ -72,8 +42,8 @@ const currentLang = isChineseQuote ? "zh" : "en";
         <span class="sr-only">RSS Feed</span>
       </a>
 
-      <p>
-        {descriptions[currentLang]}
+      <p id="description-display">
+        Welcome to my blog!
       </p>
       {
         // only display if at least one social link is enabled
@@ -130,6 +100,49 @@ const currentLang = isChineseQuote ? "zh" : "en";
 
 <script>
   document.addEventListener("astro:page-load", () => {
+    // 中文名言
+    const chineseQuotes = [
+      "青春也不过只有这些日子",
+      "认识你自己",
+      "生活就像一盒巧克力，你永远不知道下一块是什么味道",
+      "知行合一",
+    ];
+
+    // 英文名言
+    const englishQuotes = [
+      "The shortest answer is doing",
+      "Stay hungry, stay foolish",
+      "Be yourself; everyone else is already taken.",
+      "Nothing will work unless you do.",
+      "Be curious, not judgmental.",
+      "Dreaming, after all, is a form of planning."
+    ];
+
+    // 固定的简介
+    const descriptions = {
+      zh: "不骛于虚声，不驰于空想，欢迎来到我的博客！",
+      en: "Be yourself, do rather than say. Welcome to my blog!"
+    };
+
+    // 随机选择语言
+    const isChineseQuote = Math.random() > 0.5;
+    const selectedQuotes = isChineseQuote ? chineseQuotes : englishQuotes;
+    const randomQuote = selectedQuotes[Math.floor(Math.random() * selectedQuotes.length)];
+    const currentLang = isChineseQuote ? "zh" : "en";
+
+    // 更新页面内容
+    const quoteElement = document.getElementById("quote-display");
+    const descriptionElement = document.getElementById("description-display");
+    
+    if (quoteElement) {
+      quoteElement.textContent = randomQuote;
+    }
+    
+    if (descriptionElement) {
+      descriptionElement.textContent = descriptions[currentLang];
+    }
+
+    // 设置返回URL
     const indexLayout = (document.querySelector("#main-content") as HTMLElement)
       ?.dataset?.layout;
     if (indexLayout) {
